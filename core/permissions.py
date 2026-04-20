@@ -20,3 +20,12 @@ class IsAssignedAgent(permissions.BasePermission):
 class IsAdminOrAgent(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role in [UserRole.ADMIN, UserRole.AGENT]
+
+class IsAdminOrAgentOrOwner(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.role in [UserRole.ADMIN, UserRole.AGENT]:
+            return True
+        return obj.created_by == request.user

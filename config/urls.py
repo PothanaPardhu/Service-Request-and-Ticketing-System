@@ -5,12 +5,14 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from users.views import RegisterView, UserProfileView
 from tickets.views import TicketViewSet
 from analytics.views import DashboardAnalyticsView
+from core.views import landing_page
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 router = DefaultRouter()
 router.register(r'tickets', TicketViewSet, basename='ticket')
 
 urlpatterns = [
+    path('', landing_page, name='landing'),
     path('admin/', admin.site.urls),
     
     # Auth

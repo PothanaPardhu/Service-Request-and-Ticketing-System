@@ -6,8 +6,11 @@ from tickets.models import Ticket
 from core.constants import TicketStatus, UserRole
 from core.permissions import IsAdmin
 
+from .serializers import AnalyticsSerializer
+
 class DashboardAnalyticsView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
+    serializer_class = AnalyticsSerializer
 
     def get(self, request):
         total_tickets = Ticket.objects.count()

@@ -7,7 +7,7 @@ from django.db.models import Q
 from .models import Ticket, TicketActivity
 from .serializers import TicketSerializer, TicketCreateSerializer, CommentSerializer
 from .services import TicketService
-from core.permissions import IsAdmin, IsAgent, IsOwner, IsAssignedAgent, IsAdminOrAgent
+from core.permissions import IsAdmin, IsAgent, IsOwner, IsAssignedAgent, IsAdminOrAgent, IsAdminOrAgentOrOwner
 from core.constants import UserRole, TicketStatus
 from comments.models import Comment
 
@@ -27,13 +27,13 @@ class TicketViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'list', 'retrieve']:
             return [permissions.IsAuthenticated()]
         if self.action in ['update', 'partial_update', 'destroy']:
-            return [IsAdminOrAgent() | IsOwner()]
+            return [IsAdminOrAgentOrOwner()]
         if self.action == 'assign':
             return [IsAdmin()]
         if self.action in ['update_status', 'add_comment']:
-            return [IsAdminOrAgent() | IsOwner()]
-        if self.action == 'pick':
-            return [IsAgent()]
+            return [IsAdminOrAgentOrOwner()]
+        if self.action in ['pick', 'unassigned']:
+            return [IsAdminOrAgent()]
         return super().get_permissions()
 
     def get_queryset(self):
@@ -46,8 +46,15 @@ class TicketViewSet(viewsets.ModelViewSet):
         # Customers see only their own tickets
         return self.queryset.filter(created_by=user)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ticket = TicketService.create_ticket(request.user, serializer.validated_data)
+        return Response(TicketSerializer(ticket).data, status=status.HTTP_201_CREATED)
+
     def perform_create(self, serializer):
-        TicketService.create_ticket(self.request.user, serializer.validated_data)
+        # This is now handled in create()
+        pass
 
     @action(detail=True, methods=['patch'], url_path='status')
     def update_status(self, request, pk=None):
